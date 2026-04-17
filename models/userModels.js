@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
+import crypto from "crypto";
 
 //schema
 const userSchema = new mongoose.Schema({
@@ -16,30 +16,43 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is Required"]
   },
-  address: {
-    type: Array
-  },
   phone: {
     type: String,
-    required: [true, "Phone Number is Required"]
+    default: "",
   },
-  userType: {
+  avatar: {
     type: String,
-    required: true,
-    default: "Client",
-    enum: ["Client", "Admin", "Vender", "Driver"]
+    default: "../Asset/default.jpg",
   },
-  profile: {
+  teamId: {
     type: String,
-    default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5jifLXKb2qo_5aXh54USNlvxI34oPpG3zTw&s"
+    default: "",
   },
-  answer: {
-    type: String
-  }
+  role: {
+    type: String,
+    default: "Member",
+    enum: ["Member", "Admin", "Owner"]
+  },
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+    default: null,
+  },
+  integrations: {
+    googleDrive: {
+      connected: { type: Boolean, default: false },
+      email: String,
+    },
+    apiKey: {
+      type: String,
+      default: () => crypto.randomBytes(24).toString("hex"),
+    },
+  },
 }, { timestamps: true }
 );
 
+
 //export
 
-module.exports = mongoose.model('User', userSchema)
+export default mongoose.model('User', userSchema)
 

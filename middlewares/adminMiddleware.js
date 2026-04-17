@@ -1,26 +1,21 @@
-module.exports = (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.status(401).send({
-        success: false,
-        message: "Unauthorized - No user found",
-      });
-    }
+import userModel from "../models/userModels.js";
 
-    if (req.user.userType !== "Admin") {
+const adminMiddleware = async (req, res, next) => {
+  try {
+    const user = await userModel.findById(req.user.id);
+
+    if (!user || user.role !== "Owner") {
       return res.status(403).send({
         success: false,
-        message: "Only Admin Access",
+        message: "Access denied",
       });
     }
 
     next();
   } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Unauthorized access",
-      error,
-    });
+    console.log("ADMIN MIDDLEWARE ERROR:", error);
+    res.status(500).send({ success: false });
   }
 };
+
+export default adminMiddleware;

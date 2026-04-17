@@ -1,44 +1,79 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-const dotenv = require("dotenv");
-const connectDB = require("./config/db.js");
+import dotenv from "dotenv";
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-
-//dot env configuration
 dotenv.config();
 
-//DB Connection
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+
+
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
+import integrationRoutes from "./routes/integrationRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
+
+
 connectDB();
 
-//rest object
 const app = express();
 
-//middlewares
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 app.use(morgan("dev"));
 
-//route
-//URL => http://localhost:8080
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
 
-app.use('/api/v1/auth', authRoutes);
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
 
-app.use('/api/v1/user', userRoutes);
+        connectSrc: [
+          "'self'",
+          "http://localhost:8080",
+          "ws://localhost:8080",
+        ],
 
-app.get('/', (req,res) => {
-    return res
-    .status(200)
-    .send("<h1>Welcome to ChayanAI Server</h1>");
+        imgSrc: [
+          "'self'",
+          "data:",
+          "blob:",
+          "http://localhost:8080",
+        ],
+
+        "script-src": ["'self'", "'unsafe-inline'", "https://translate.google.com"],
+        "frame-src": ["https://translate.google.com"],
+      },
+    },
+  })
+);
+
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/uploads", express.static("uploads"));
+app.use("/api/v1/billing", billingRoutes);
+app.use("/api/v1/team", teamRoutes);
+app.use("/api/v1/project", projectRoutes);
+app.use("/api/v1/integrations", integrationRoutes);
+app.use("/api/v1/activity", activityRoutes);
+app.use("/api/v1/support", supportRoutes);
+
+app.get("/", (req, res) => {
+  res.status(200).send({
+    success: true,
+    message: "ChayanAI Server is Running",
+  });
 });
 
+const PORT = process.env.PORT || 8080;
 
-//PORT
-const PORT = process.env.PORT || 5000;
-
-//listen
 app.listen(PORT, () => {
-    console.log(`Node Server Running on PORT-${PORT}`);
-})
+  console.log(`Server running on port ${PORT}`);
+});

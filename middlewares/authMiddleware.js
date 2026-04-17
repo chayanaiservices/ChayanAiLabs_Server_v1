@@ -1,39 +1,46 @@
-const JWT = require("jsonwebtoken");
-const userModel = require("../models/userModels");
+import jwt from "jsonwebtoken";
 
-module.exports = async (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader) {
       return res.status(401).send({
         success: false,
         message: "No token provided",
       });
     }
 
-    const decoded = JWT.verify(token, process.env.JWT_SECRET);
-
-    // Fetch user from DB using decoded.id
-    const user = await userModel.findById(decoded.id).select("-password");
-
-    if (!user) {
+    if (!authHeader.startsWith("Bearer ")) {
       return res.status(401).send({
         success: false,
-        message: "User not found",
+        message: "Invalid token format",
       });
     }
 
-    // Store full user object
-    req.user = user;
+    const token = authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).send({
+        success: false,
+        message: "Token missing",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded;
 
     next();
+
   } catch (error) {
-    console.log(error);
-    res.status(500).send({
+    console.log("JWT VERIFY ERROR:", error.name, "->", error.message);
+
+    return res.status(401).send({
       success: false,
-      message: "Auth failed",
-      error,
+      message: "Invalid or expired token",
     });
   }
 };
+
+export default authMiddleware;
